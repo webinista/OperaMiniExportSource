@@ -23,7 +23,7 @@ Define your AWS Access Key, AWS Secret Key, and bucket name as constants in conf
 -- USAGE --
 
 * Visit a URL using Opera Mini.
-* Enter server:source?post=http://path/to/your/server/
+* Enter server:source?post=http://urlof/the/script/on/your/server/
 
 -----------------
 LICENSE
