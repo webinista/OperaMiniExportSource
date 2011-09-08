@@ -18,70 +18,10 @@ require_once('conf.php');
 require_once('funcs.php');
 require_once('S3.php');
 
-# die if we don't have an access key
-if( !has_access_key() ):
-	die('Please define an Amazon Web Services Access Key');
-endif;
+$segments =  explode( 'index.php', $_SERVER['REQUEST_URI'] );
+$last = array_pop( $segments );
 
-# die if we don't have a secret key
-if( !has_secret_key() ):
-	die('Please define your Amazon Web Services Secret Key');
-endif;
+( empty($segments) || ( $last == '' || $last == '/') ) ? $controller = 'main' : $controller = trim($last,'/');
 
-# die if we don't have a bucket
-if( !has_bucket() ):
-	die('Please define your S3 bucket');
-endif;
-
-# die if this doesn't look like an Opera Mini request
-# ( easy to spoof these headers though )
-
-if( is_mini_request() ):
-	header("HTTP/1.1 400 Bad Request");
-	die("<h1>HTTP/1.1 400 Bad Request</h1>");
-else:
-
-	/*-----------------
-	Start the magic
-	-----------------*/
-
-	# clean up the host and URL a bit
-	$sanitized = sanitize_post();
-
-	# if we have some HTML to save
-	if( $_POST['html'] !== ''):
-
-		# reformat and generate file name
-		$filename = sprintf('%s_%d.html', preg_replace('/\W/','', $sanitized['host']), time() );
-
-		# create a new S3 object
-		$S3 = new S3(AWSACCESSKEY, AWSSECRETKEY);
-
-		# save it to S3
-		$success =  save_to_s3( $S3, $_POST['html'], S3BUCKET, $filename, S3::ACL_PUBLIC_READ );
-
-		# if that worked ...
-		if( $success ):
-			$data['title']    = FILE_CREATED_TITLE;
-			$data['content']  = FILE_CREATED_BODY;
-			$data['view_url'] = sprintf('http://%s.s3.amazonaws.com/%s', S3BUCKET, $filename );
-		else:
-			# View URL
-			$data['title']    = FILE_CREATION_FAILED_TITLE;
-			$data['content']  = FILE_CREATION_FAILED_BODY;
-			$data['view_url'] = '';
-		endif; // end success loop.
-
-	else:
-		# if we don't have some HTML.
-		$data['title']    = NO_HTML_TITLE;
-		$data['content']  = NO_HTML_BODY;
-		$data['view_url'] = '';
-
-	endif;
-
-	extract( $data, EXTR_OVERWRITE );
-	include('tpl/created.tpl');
-
-endif;
+load_page($controller);
 
