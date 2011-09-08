@@ -21,6 +21,7 @@ function sanitize_post(){
 	$filter['url']  = FILTER_SANITIZE_URL;
 	$filter['host'] = array('filter'=> FILTER_SANITIZE_STRING,
 							'flags' => FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+
 	$filter['html'] = FILTER_SANITIZE_SPECIAL_CHARS;
 
 	$sanitized = filter_input_array( INPUT_POST, $filter );
@@ -60,7 +61,23 @@ function save_to_s3($s3obj, $html, $bucket, $filename, $publicread = 'public-rea
 	endif;
 }
 
-function load( $template, $dataArray ){
+function load_template( $template, $dataArray ){
 	extract( $dataArray, EXTR_OVERWRITE );
 	include( $template );
 }
+
+
+function load_page( $file = 'main' ){
+
+	if( file_exists( 'controllers/'.$file.'.php' ) ):
+
+		include('controllers/'.$file.'.php');
+
+	else:
+
+		die("Can't load that controller. The file does not exist.");
+
+	endif;
+
+}
+
