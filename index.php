@@ -8,98 +8,80 @@ The above copyright notice and this permission notice shall be included in all c
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+Uses Donovan Schonknecht's Amazon S3 Class:
+http://undesigned.org.za/2007/10/22/amazon-s3-php-class
+
 */
 
-
+# can't do much without these files.
 require_once('conf.php');
+require_once('funcs.php');
+require_once('S3.php');
 
 # die if we don't have an access key
-if( !defined('AWSACCESSKEY') || is_null( AWSACCESSKEY ) ):
+if( !has_access_key() ):
 	die('Please define an Amazon Web Services Access Key');
 endif;
 
 # die if we don't have a secret key
-if( !defined('AWSSECRETKEY') || is_null( AWSSECRETKEY ) ):
+if( !has_secret_key() ):
 	die('Please define your Amazon Web Services Secret Key');
 endif;
 
 # die if we don't have a bucket
-if ( !defined('S3BUCKET') || is_null( S3BUCKET ) ):
+if( !has_bucket() ):
 	die('Please define your S3 bucket');
 endif;
 
-# uses the Amazon S3 Class: http://undesigned.org.za/2007/10/22/amazon-s3-php-class
-require_once('S3.php');
+# die if this doesn't look like an Opera Mini request
+# ( easy to spoof these headers though )
 
-# if this request doesn't contain the HTTP_X_FORWARDED_FOR or HTTP_X_OPERAMINI_PHONE headers
-if(
-	!array_key_exists('HTTP_X_FORWARDED_FOR',$_SERVER) &&
-	!array_key_exists('HTTP_X_OPERAMINI_PHONE',$_SERVER)
-):
+if( is_mini_request() ):
 	header("HTTP/1.1 400 Bad Request");
-	die;
+	die("<h1>HTTP/1.1 400 Bad Request</h1>");
 else:
-	# filter the URLs
-	$filter['url']  = FILTER_SANITIZE_URL;
-	$filter['host'] = array('filter'=> FILTER_SANITIZE_STRING,
-							'flags' => FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-	$filter['html'] = FILTER_SANITIZE_SPECIAL_CHARS;
 
-	$sanitized = filter_input_array( INPUT_POST, $filter );
+	/*-----------------
+	Start the magic
+	-----------------*/
 
-	# clean up the file name
-	$filename = preg_replace('/\W/','', $_POST['host'].'_'.time() ).'.html';
+	# clean up the host and URL a bit
+	$sanitized = sanitize_post();
 
-	# create a new S3 object
-	$S3 = new S3(AWSACCESSKEY, AWSSECRETKEY);
+	# if we have some HTML to save
+	if( $_POST['html'] !== ''):
 
-	$comments = '<!-- from: '.$sanitized['url'].' on: '.date('r').'-->';
+		# reformat and generate file name
+		$filename = sprintf('%s_%d.html', preg_replace('/\W/','', $sanitized['host']), time() );
 
-	# use the raw HTML as sent and append the comment string.
-	$html = $_POST['html'] . $comments;
+		# create a new S3 object
+		$S3 = new S3(AWSACCESSKEY, AWSSECRETKEY);
 
-	# save it to S3
-	$success = $S3->putObject($html,
-					   S3BUCKET,
-					   $filename,
-					   S3::ACL_PUBLIC_READ,
-					   array(),
-					   array("Content-Type" => "text/html") );
+		# save it to S3
+		$success =  save_to_s3( $S3, $_POST['html'], S3BUCKET, $filename, S3::ACL_PUBLIC_READ );
 
-	# generate the view URL
-	$view_url = sprintf('http://%s.s3.amazonaws.com/%s',
-						S3BUCKET,
-						$filename );
-?>
+		# if that worked ...
+		if( $success ):
+			$data['title']    = FILE_CREATED_TITLE;
+			$data['content']  = FILE_CREATED_BODY;
+			$data['view_url'] = sprintf('http://%s.s3.amazonaws.com/%s', S3BUCKET, $filename );
+		else:
+			# View URL
+			$data['title']    = FILE_CREATION_FAILED_TITLE;
+			$data['content']  = FILE_CREATION_FAILED_BODY;
+			$data['view_url'] = '';
+		endif; // end success loop.
 
-<!DOCTYPE html>
-<html lang="en-us">
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width,user-scalable=yes">
-	<title>Opera Mini Source</title>
-	<style media="screen">
-		body{
-			font: 13px / 1.5 helvetica, arial, sans-serif
-		}
+	else:
+		# if we don't have some HTML.
+		$data['title']    = NO_HTML_TITLE;
+		$data['content']  = NO_HTML_BODY;
+		$data['view_url'] = '';
 
-	</style>
-</head>
-<body>
-<?
-# did it work?
-if($success): ?>
-<h1>You can view the file here at the following URL</h1>
-<p><a href="<?=$view_url;?>"><?=$view_url;?></a></p>
-<p><a href="recent/">View recently saved pages</a></p>
-<? else:
-# no it didn't.
-?>
-<h1>Couldn't save that source code!</h1>
-<p>Not sure what went wrong. You should probably check that you have the right credentials.</p>
-<? endif; ?>
+	endif;
 
-</body>
-</html>
+	extract( $data, EXTR_OVERWRITE );
+	include('tpl/created.tpl');
 
-<? endif; ?>
+endif;
+
