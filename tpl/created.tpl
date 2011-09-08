@@ -9,5 +9,7 @@
 <h1><?php print $title; ?></h1>
 <p><?php print $content; ?>
 <br><a href="<?php print $view_url;?>"><?php print $view_url;?></a></p>
+
+<p><a href="index.php/recent/">View recent files</a></p>
 </body>
 </html>
