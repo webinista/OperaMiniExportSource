@@ -59,3 +59,8 @@ function save_to_s3($s3obj, $html, $bucket, $filename, $publicread = 'public-rea
 		return $success;
 	endif;
 }
+
+function load( $template, $dataArray ){
+	extract( $dataArray, EXTR_OVERWRITE );
+	include( $template );
+}
