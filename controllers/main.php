@@ -13,11 +13,6 @@ http://undesigned.org.za/2007/10/22/amazon-s3-php-class
 
 */
 
-# can't do much without these files.
-require_once('conf.php');
-require_once('funcs.php');
-require_once('S3.php');
-
 # die if we don't have an access key
 if( !has_access_key() ):
 	die('Please define an Amazon Web Services Access Key');
