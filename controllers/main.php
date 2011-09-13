@@ -75,7 +75,7 @@ else:
 
 	endif;
 
-	load_template('tpl/created.tpl', $data);
+	load_template('tpl/created.php', $data);
 
 endif;
 

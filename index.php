@@ -18,6 +18,8 @@ require_once('conf.php');
 require_once('funcs.php');
 require_once('S3.php');
 
+define('S3BASEURL','.s3.amazonaws.com/');
+
 $segments =  explode( 'index.php', $_SERVER['REQUEST_URI'] );
 $last = array_pop( $segments );
 

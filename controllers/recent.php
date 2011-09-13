@@ -31,42 +31,10 @@ $base_url = sprintf('http://%s.s3.amazonaws.com/',
 						S3BUCKET);
 $S3 = new S3(AWSACCESSKEY, AWSSECRETKEY);
 
+# retrieve existing files in bucket.
+$data['contents'] = $S3->getBucket( S3BUCKET );
+$data['baseurl'] = sprintf('http://%s'.S3BASEURL, S3BUCKET);
+
+load_template('tpl/recent.php', $data);
+
 ?>
-
-<!DOCTYPE html>
-<html lang="en-us">
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width,user-scalable=yes">
-	<title>Opera Mini Source</title>
-	<style media="screen">
-		body{
-			font: 13px / 1.5 helvetica, arial, sans-serif
-		}
-
-	</style>
-</head>
-<body>
-
-<h1>Recently saved source code files</h1>
-
-<ul>
-<?
-
-if( ( $contents = $S3->getBucket( S3BUCKET ) ) !== false){
-
-	foreach($contents as $key=>$value){
-	 	$link = sprintf('<li><a href="%s">%s</a> (saved: %s)</li>',
-	 					$base_url.$value['name'],
-	 					$value['name'],
-	 					date('d M Y',$value['time']) );
-	 	echo $link;
-
-
-	}
-}
-?>
-</ul>
-
-</body>
-</html>
