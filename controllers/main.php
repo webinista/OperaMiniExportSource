@@ -33,7 +33,10 @@ endif;
 
 if( is_mini_request() ):
 	header("HTTP/1.1 400 Bad Request");
-	die("<h1>HTTP/1.1 400 Bad Request</h1>");
+	$data['title'] = 'HTTP/1.1 400 Bad Request';
+	load_template('tpl/badrequest.php', $data);
+
+	die;
 else:
 
 	/*-----------------
