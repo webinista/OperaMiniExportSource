@@ -32,10 +32,9 @@ endif;
 # ( easy to spoof these headers though )
 
 if( is_mini_request() ):
-	header("HTTP/1.1 400 Bad Request");
-	$data['title'] = 'HTTP/1.1 400 Bad Request';
+	header("HTTP/1.1 406 Not Acceptable");
+	$data['title'] = 'HTTP/1.1 406 Not Acceptable';
 	load_template('tpl/badrequest.php', $data);
-
 	die;
 else:
 

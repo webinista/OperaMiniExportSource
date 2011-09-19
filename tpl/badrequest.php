@@ -2,7 +2,7 @@
 <html lang="en-us">
 <head>
 	<meta charset="UTF-8">
-	<title>Bad Request</title>
+	<title><?php print $title;?></title>
 	<link rel="stylesheet" href="tpl/s.css">
 </head>
 <body>
